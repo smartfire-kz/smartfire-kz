@@ -323,7 +323,11 @@ if (
     ):
 
         st.session_state.electricity = "АЖЫРАТЫЛДЫ 🔌"
-
+send_telegram(
+            "✅ SMART FIRE KZ\n\n"
+            "⚡ Апаттық команда қабылданды.\n"
+            "🔌 Электр жүйесі: АЖЫРАТЫЛДЫ"
+        )
         st.success(
             "✅ Апаттық команда орындалды!"
         )
