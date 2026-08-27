@@ -322,12 +322,14 @@ if (
         type="primary"
     ):
 
-        st.session_state.electricity = "АЖЫРАТЫЛДЫ 🔌"
-send_telegram(
+  st.session_state.electricity = "АЖЫРАТЫЛДЫ"
+
+        send_telegram(
             "✅ SMART FIRE KZ\n\n"
             "⚡ Апаттық команда қабылданды.\n"
             "🔌 Электр жүйесі: АЖЫРАТЫЛДЫ"
         )
+
         st.success(
             "✅ Апаттық команда орындалды!"
         )
@@ -337,7 +339,10 @@ send_telegram(
             "бағдарламалық түрде модельденді."
         )
 
-        st.rerun()
+        st.rerun()     
+
+            
+           
 
 
 # -------------------------------------------------
