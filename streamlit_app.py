@@ -250,14 +250,22 @@ if st.button(
     input_data = np.array([[temperature, smoke]])
 
     if temperature >= 55 or smoke >= 60:
-    prediction = "FIRE"
-    confidence = 100.0
-elif temperature >= 35 or smoke >= 30:
-    prediction = "WARNING"
-    confidence = 95.0
-else:
-    prediction = "SAFE"
-    confidence = 100.0
+            prediction = "FIRE"
+            confidence = 100.0
+        elif temperature >= 35 or smoke >= 30:
+            prediction = "WARNING"
+            confidence = 95.0
+        else:
+            prediction = "SAFE"
+            confidence = 100.0
+    
+    
+
+    
+    
+
+    
+    
 
     
 
