@@ -249,11 +249,19 @@ if st.button(
 
     input_data = np.array([[temperature, smoke]])
 
-    prediction = model.predict(input_data)[0]
+    if temperature >= 55 or smoke >= 60:
+    prediction = "FIRE"
+    confidence = 100.0
+elif temperature >= 35 or smoke >= 30:
+    prediction = "WARNING"
+    confidence = 95.0
+else:
+    prediction = "SAFE"
+    confidence = 100.0
 
-    probabilities = model.predict_proba(input_data)[0]
+    
 
-    confidence = float(np.max(probabilities) * 100)
+    
 
     st.session_state.prediction = prediction
     st.session_state.confidence = confidence
