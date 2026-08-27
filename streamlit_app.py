@@ -2,6 +2,27 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+import requests
+def send_telegram(message):
+    try:
+        token = st.secrets["TELEGRAM_TOKEN"]
+        chat_id = st.secrets["CHAT_ID"]
+
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+
+        response = requests.post(
+            url,
+            data={
+                "chat_id": chat_id,
+                "text": message
+            },
+            timeout=10
+        )
+
+        return response.ok
+
+    except Exception:
+        return False
 
 # -------------------------------------------------
 # SMART FIRE KZ
@@ -258,6 +279,19 @@ if "prediction" in st.session_state:
         st.error(
             "📱 Жауапты адамға апаттық ескерту жіберілуі тиіс."
         )
+        telegram_message = (
+            "🚨 SMART FIRE KZ\n\n"
+            "🔥 ӨРТ ҚАУПІ АНЫҚТАЛДЫ!\n"
+            f"🌡 Температура: {temperature} °C\n"
+            f"💨 Түтін деңгейі: {smoke} %\n"
+            f"🎯 ЖИ сенімділігі: {confidence:.1f}%\n\n"
+            "⚠️ Үй жағдайын дереу тексеріңіз!"
+        )
+
+        if send_telegram(telegram_message):
+            st.success("📲 Telegram-ға апаттық хабарлама жіберілді!")
+        else:
+            st.warning("⚠️ Telegram хабарламасын жіберу мүмкін болмады.")
 
 
 # -------------------------------------------------
