@@ -1,8 +1,25 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
 import requests
+from sklearn.ensemble import RandomForestClassifier
+
+
+# ============================================================
+# БЕТ БАПТАУЛАРЫ
+# ============================================================
+
+st.set_page_config(
+    page_title="Smart Fire KZ",
+    page_icon="🔥",
+    layout="centered"
+)
+
+
+# ============================================================
+# TELEGRAM
+# ============================================================
+
 def send_telegram(message):
     try:
         token = st.secrets["TELEGRAM_TOKEN"]
@@ -24,129 +41,75 @@ def send_telegram(message):
     except Exception:
         return False
 
-# -------------------------------------------------
-# SMART FIRE KZ
-# -------------------------------------------------
 
-st.set_page_config(
-    page_title="Smart Fire KZ",
-    page_icon="🔥",
-    layout="centered"
+# ============================================================
+# ДИЗАЙН
+# ============================================================
+
+st.markdown(
+    """
+    <style>
+
+    .block-container {
+        max-width: 900px;
+        padding-top: 2rem;
+    }
+
+    .main-title {
+        text-align: center;
+        font-size: 45px;
+        font-weight: 800;
+        margin-bottom: 5px;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #666;
+        font-size: 18px;
+        margin-bottom: 35px;
+    }
+
+    .status-box {
+        padding: 28px;
+        border-radius: 18px;
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    .safe {
+        background-color: #eaf7ee;
+        border: 2px solid #4caf50;
+    }
+
+    .warning {
+        background-color: #fff6df;
+        border: 2px solid #f0ad4e;
+    }
+
+    .fire {
+        background-color: #fff0f0;
+        border: 2px solid #e53935;
+    }
+
+    .power {
+        padding: 20px;
+        border-radius: 14px;
+        background-color: #f5f5f5;
+        text-align: center;
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
-# -------------------------------------------------
-# ДИЗАЙН
-# -------------------------------------------------
 
-st.markdown("""
-<style>
-.block-container {
-    max-width: 900px;
-    padding-top: 2rem;
-}
-
-.main-title {
-    text-align: center;
-    font-size: 45px;
-    font-weight: 800;
-}
-
-.subtitle {
-    text-align: center;
-    color: #666;
-    font-size: 18px;
-    margin-bottom: 25px;
-}
-
-.status-box {
-    padding: 22px;
-    border-radius: 16px;
-    text-align: center;
-    margin: 15px 0;
-}
-
-.safe {
-    background: #e8f5e9;
-    border: 2px solid #4caf50;
-}
-
-.warning {
-    background: #fff8e1;
-    border: 2px solid #ffc107;
-}
-
-.fire {
-    background: #ffebee;
-    border: 2px solid #f44336;
-}
-
-.power {
-    padding: 18px;
-    border-radius: 14px;
-    background: #f4f6f8;
-    text-align: center;
-    font-size: 20px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-# -------------------------------------------------
-# ML МОДЕЛІ
-# -------------------------------------------------
-
-@st.cache_resource
-def train_model():
-
-    np.random.seed(42)
-
-    n = 1000
-
-    temperature = np.random.randint(15, 101, n)
-    smoke = np.random.randint(0, 101, n)
-
-    labels = []
-
-    for t, s in zip(temperature, smoke):
-
-        if t >= 60 and s >= 60:
-            labels.append("FIRE")
-
-        elif t >= 45 or s >= 40:
-            labels.append("WARNING")
-
-        else:
-            labels.append("SAFE")
-
-    X = pd.DataFrame({
-        "temperature": temperature,
-        "smoke": smoke
-    })
-
-    model = RandomForestClassifier(
-        n_estimators=200,
-        random_state=42
-    )
-
-    model.fit(X, labels)
-
-    return model
-
-
-model = train_model()
-
-
-# -------------------------------------------------
-# SESSION STATE
-# -------------------------------------------------
-
-if "electricity" not in st.session_state:
-    st.session_state.electricity = "ҚОСУЛЫ ⚡"
-
-
-# -------------------------------------------------
+# ============================================================
 # ТАҚЫРЫП
-# -------------------------------------------------
+# ============================================================
 
 st.markdown(
     '<div class="main-title">🔥 SMART FIRE KZ</div>',
@@ -154,18 +117,94 @@ st.markdown(
 )
 
 st.markdown(
-    '<div class="subtitle">'
-    'Өрт қаупін интеллектуалды бақылау жүйесі'
-    '</div>',
+    '<div class="subtitle">Өрт қаупін интеллектуалды бақылау жүйесі</div>',
     unsafe_allow_html=True
 )
 
 st.divider()
 
 
-# -------------------------------------------------
-# КӨРСЕТКІШТЕР
-# -------------------------------------------------
+# ============================================================
+# SESSION STATE
+# ============================================================
+
+if "electricity" not in st.session_state:
+    st.session_state.electricity = "ҚОСУЛЫ"
+
+if "prediction" not in st.session_state:
+    st.session_state.prediction = None
+
+if "confidence" not in st.session_state:
+    st.session_state.confidence = 0.0
+
+if "temperature" not in st.session_state:
+    st.session_state.temperature = 25
+
+if "smoke" not in st.session_state:
+    st.session_state.smoke = 10
+
+
+# ============================================================
+# МАШИНАЛЫҚ ОҚЫТУ МОДЕЛІ
+# ============================================================
+
+X = np.array([
+    [20, 5],
+    [22, 8],
+    [25, 10],
+    [28, 12],
+    [30, 15],
+    [32, 18],
+
+    [35, 20],
+    [38, 25],
+    [40, 30],
+    [42, 35],
+    [45, 40],
+
+    [50, 45],
+    [55, 50],
+    [60, 60],
+    [65, 70],
+    [70, 75],
+    [75, 80],
+    [80, 90]
+])
+
+y = np.array([
+    "SAFE",
+    "SAFE",
+    "SAFE",
+    "SAFE",
+    "SAFE",
+    "SAFE",
+
+    "WARNING",
+    "WARNING",
+    "WARNING",
+    "WARNING",
+    "WARNING",
+
+    "FIRE",
+    "FIRE",
+    "FIRE",
+    "FIRE",
+    "FIRE",
+    "FIRE",
+    "FIRE"
+])
+
+model = RandomForestClassifier(
+    n_estimators=200,
+    random_state=42
+)
+
+model.fit(X, y)
+
+
+# ============================================================
+# ҮЙ ЖАҒДАЙЫН МОДЕЛЬДЕУ
+# ============================================================
 
 st.subheader("🏠 Үй жағдайын модельдеу")
 
@@ -173,14 +212,14 @@ temperature = st.slider(
     "🌡 Температура (°C)",
     min_value=15,
     max_value=100,
-    value=25
+    value=st.session_state.temperature
 )
 
 smoke = st.slider(
     "💨 Түтін деңгейі (%)",
     min_value=0,
     max_value=100,
-    value=10
+    value=st.session_state.smoke
 )
 
 col1, col2 = st.columns(2)
@@ -198,9 +237,9 @@ with col2:
     )
 
 
-# -------------------------------------------------
-# ЖИ ТЕКСЕРУ
-# -------------------------------------------------
+# ============================================================
+# ЖИ-МЕН ТЕКСЕРУ
+# ============================================================
 
 if st.button(
     "🤖 ЖИ-МЕН ЖҮЙЕНІ ТЕКСЕРУ",
@@ -208,29 +247,33 @@ if st.button(
     type="primary"
 ):
 
-    test_data = pd.DataFrame(
-        [[temperature, smoke]],
-        columns=["temperature", "smoke"]
-    )
+    input_data = np.array([[temperature, smoke]])
 
-    prediction = model.predict(test_data)[0]
+    prediction = model.predict(input_data)[0]
 
-    probabilities = model.predict_proba(test_data)[0]
+    probabilities = model.predict_proba(input_data)[0]
 
-    confidence = max(probabilities) * 100
+    confidence = float(np.max(probabilities) * 100)
 
     st.session_state.prediction = prediction
     st.session_state.confidence = confidence
+    st.session_state.temperature = temperature
+    st.session_state.smoke = smoke
+
+    # Жаңа тексеру басталғанда электрді қайта қосулы деп модельдейміз
+    st.session_state.electricity = "ҚОСУЛЫ"
 
 
-# -------------------------------------------------
-# НӘТИЖЕ
-# -------------------------------------------------
+# ============================================================
+# ЖИ НӘТИЖЕСІ
+# ============================================================
 
-if "prediction" in st.session_state:
+if st.session_state.prediction is not None:
 
     prediction = st.session_state.prediction
     confidence = st.session_state.confidence
+    temperature = st.session_state.temperature
+    smoke = st.session_state.smoke
 
     st.subheader("🤖 ЖИ болжамы")
 
@@ -253,7 +296,10 @@ if "prediction" in st.session_state:
             f"""
             <div class="status-box warning">
                 <h2>🟡 ЕСКЕРТУ</h2>
-                <p>Көрсеткіштердің бірі қалыпты деңгейден жоғары.</p>
+                <p>
+                    🌡 Температура: {temperature} °C<br>
+                    💨 Түтін деңгейі: {smoke} %
+                </p>
                 <b>ЖИ сенімділігі: {confidence:.1f}%</b>
             </div>
             """,
@@ -279,6 +325,7 @@ if "prediction" in st.session_state:
         st.error(
             "📱 Жауапты адамға апаттық ескерту жіберілуі тиіс."
         )
+
         telegram_message = (
             "🚨 SMART FIRE KZ\n\n"
             "🔥 ӨРТ ҚАУПІ АНЫҚТАЛДЫ!\n"
@@ -289,14 +336,18 @@ if "prediction" in st.session_state:
         )
 
         if send_telegram(telegram_message):
-            st.success("📲 Telegram-ға апаттық хабарлама жіберілді!")
+            st.success(
+                "📲 Telegram-ға апаттық хабарлама жіберілді!"
+            )
         else:
-            st.warning("⚠️ Telegram хабарламасын жіберу мүмкін болмады.")
+            st.warning(
+                "⚠️ Telegram хабарламасын жіберу мүмкін болмады."
+            )
 
 
-# -------------------------------------------------
+# ============================================================
 # ЭЛЕКТР ЖҮЙЕСІ
-# -------------------------------------------------
+# ============================================================
 
 st.subheader("⚡ Электр жүйесін басқару")
 
@@ -311,9 +362,10 @@ st.markdown(
 )
 
 
+# Өрт анықталса ғана ажырату батырмасы шығады
 if (
-    "prediction" in st.session_state
-    and st.session_state.prediction == "FIRE"
+    st.session_state.prediction == "FIRE"
+    and st.session_state.electricity == "ҚОСУЛЫ"
 ):
 
     if st.button(
@@ -322,32 +374,34 @@ if (
         type="primary"
     ):
 
-  st.session_state.electricity = "АЖЫРАТЫЛДЫ"
+        st.session_state.electricity = "АЖЫРАТЫЛДЫ"
 
         send_telegram(
             "✅ SMART FIRE KZ\n\n"
             "⚡ Апаттық команда қабылданды.\n"
-            "🔌 Электр жүйесі: АЖЫРАТЫЛДЫ"
+            "🔌 Электр жүйесі: АЖЫРАТЫЛДЫ\n\n"
+            "⚠️ Бұл прототипте электр желісінің "
+            "ажыратылуы бағдарламалық түрде модельденді."
         )
 
-        st.success(
-            "✅ Апаттық команда орындалды!"
-        )
-
-        st.warning(
-            "🔌 Электр жүйесінің ажыратылуы "
-            "бағдарламалық түрде модельденді."
-        )
-
-        st.rerun()     
-
-            
-           
+        st.rerun()
 
 
-# -------------------------------------------------
-# АҚПАРАТ
-# -------------------------------------------------
+if st.session_state.electricity == "АЖЫРАТЫЛДЫ":
+
+    st.success(
+        "✅ Апаттық команда орындалды!"
+    )
+
+    st.warning(
+        "🔌 Электр жүйесінің ажыратылуы "
+        "бағдарламалық түрде модельденді."
+    )
+
+
+# ============================================================
+# ЖОБА ТУРАЛЫ
+# ============================================================
 
 st.divider()
 
@@ -363,9 +417,13 @@ with st.expander("ℹ️ Жоба туралы"):
         Жүйе қауіпсіз, ескерту және өрт қаупі
         жағдайларын ажыратады.
 
-        Өрт қаупі анықталған кезде электр жүйесін
-        апаттық ажырату әрекеті бағдарламалық
-        түрде модельденеді.
+        Өрт қаупі анықталған кезде Telegram
+        арқылы жауапты адамға автоматты
+        хабарлама жіберіледі.
+
+        Сонымен қатар электр желісін апаттық
+        ажырату әрекеті бағдарламалық түрде
+        модельденеді.
         """
     )
 
